@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Ошибка {{ code }} — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="card card-pad" style="max-width: 620px; margin: 40px auto; text-align: center;">
+  <div style="font-size: 52px; font-weight: 800; letter-spacing: -3px; color: var(--red);">{{ code }}</div>
+  <h1 style="font-size: 23px;">Не удалось выполнить запрос</h1>
+  <p class="muted">{{ message }}</p>
+  <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+    <a class="btn btn-primary" href="/">На главную</a>
+    <button class="btn btn-outline" type="button" onclick="history.back()">Назад</button>
+  </div>
+</div>
+{% endblock %}

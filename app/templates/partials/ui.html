@@ -1,0 +1,84 @@
+{% macro status_badge(status) -%}
+  {%- set meta = STATUS_META.get(status, {'label': status, 'css': 'muted'}) -%}
+  <span class="badge badge-{{ meta.css }}">{{ meta.label }}</span>
+{%- endmacro %}
+
+{% macro status_stepper(status) -%}
+  {%- set steps = [
+      ('accepted', 'Принята'),
+      ('diagnostics', 'Диагностика'),
+      ('in_repair', 'Ремонт'),
+      ('ready', 'Готова'),
+      ('issued', 'Выдана')
+  ] -%}
+  {%- set order = ['accepted', 'diagnostics', 'in_repair', 'ready', 'issued'] -%}
+  {%- set current_index = order.index(status) if status in order else -1 -%}
+  {%- if status == 'cancelled' -%}
+    <div class="stepper stepper-cancelled">
+      <span class="badge badge-cancelled">Заявка отменена</span>
+    </div>
+  {%- else -%}
+  <ol class="stepper">
+    {% for key, label in steps %}
+      {% set index = loop.index0 %}
+      <li class="stepper-item {{ 'is-done' if index < current_index }} {{ 'is-current' if index == current_index }}">
+        <span class="stepper-dot">{{ index + 1 }}</span>
+        <span class="stepper-label">{{ label }}</span>
+      </li>
+    {% endfor %}
+  </ol>
+  {%- endif -%}
+{%- endmacro %}
+
+{% macro request_table(requests, link_prefix, show_client=true) -%}
+  {% if requests %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Заявка</th>
+          {% if show_client %}<th>Клиент</th>{% endif %}
+          <th>Устройство</th>
+          <th>Мастер</th>
+          <th>Статус</th>
+          <th class="text-right">Стоимость</th>
+          <th>Создана</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in requests %}
+        <tr>
+          <td>
+            <a class="link-strong" href="{{ link_prefix }}/{{ item.id }}">{{ short_number(item.number) }}</a>
+            {% if item.service %}<span class="cell-sub">{{ item.service.name }}</span>{% endif %}
+          </td>
+          {% if show_client %}
+          <td>
+            {{ item.client.full_name }}
+            {% if item.client.phone %}<span class="cell-sub">{{ item.client.phone }}</span>{% endif %}
+          </td>
+          {% endif %}
+          <td>
+            {{ item.device_type }}
+            {% if item.brand_model %}<span class="cell-sub">{{ item.brand_model }}</span>{% endif %}
+          </td>
+          <td>{{ item.master.full_name if item.master else '—' }}</td>
+          <td>{{ status_badge(item.status) }}</td>
+          <td class="text-right">{{ item.total_cost|money }}</td>
+          <td class="nowrap">{{ item.created_at|datetime_ru }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+{%- endmacro %}
+
+{% macro empty_state(title, text, action_url=None, action_label=None) -%}
+  <div class="empty">
+    <div class="empty-icon" aria-hidden="true">🛠</div>
+    <h3>{{ title }}</h3>
+    <p>{{ text }}</p>
+    {% if action_url %}<a class="btn btn-primary" href="{{ action_url }}">{{ action_label }}</a>{% endif %}
+  </div>
+{%- endmacro %}

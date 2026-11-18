@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/ui.html" import request_table, empty_state %}
+{% block title %}Заявки — панель администратора{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Заявки</h1>
+    <p class="page-sub">Все обращения клиентов. Назначение мастеров, смена статусов и контроль стоимости — в карточке заявки.</p>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" action="/admin/requests">
+  <div class="field field-search">
+    <label for="q">Поиск</label>
+    <input id="q" type="search" name="q" value="{{ filters.q }}" placeholder="Номер, клиент, телефон, устройство">
+  </div>
+  <div class="field">
+    <label for="status">Статус</label>
+    <select id="status" name="status">
+      <option value="">Все статусы</option>
+      {% for status in ALL_STATUSES %}
+      <option value="{{ status }}" {{ 'selected' if filters.status == status }}>{{ STATUS_LABELS[status] }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="field">
+    <label for="master_id">Мастер</label>
+    <select id="master_id" name="master_id">
+      <option value="">Любой</option>
+      {% for master in masters %}
+      <option value="{{ master.id }}" {{ 'selected' if filters.master_id == master.id }}>{{ master.full_name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-outline" type="submit">Применить</button>
+  {% if filters.q or filters.status or filters.master_id %}
+  <a class="btn btn-ghost" href="/admin/requests">Сбросить</a>
+  {% endif %}
+</form>
+
+<p class="muted small">Найдено: <strong>{{ requests|length }}</strong> {{ plural_ru(requests|length, 'заявка', 'заявки', 'заявок') }}</p>
+
+{% if requests %}
+{{ request_table(requests, '/admin/requests', show_client=true) }}
+{% else %}
+{{ empty_state('Заявок не найдено', 'Измените параметры фильтра или сбросьте их.', '/admin/requests', 'Сбросить фильтры') }}
+{% endif %}
+{% endblock %}

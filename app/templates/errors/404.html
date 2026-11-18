@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Страница не найдена — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="card card-pad" style="max-width: 620px; margin: 40px auto; text-align: center;">
+  <div style="font-size: 56px; font-weight: 800; letter-spacing: -3px; color: var(--brand);">404</div>
+  <h1 style="font-size: 24px;">{{ message or 'Страница не найдена' }}</h1>
+  <p class="muted">Возможно, ссылка устарела или объект был удалён. Проверьте адрес или вернитесь на главную.</p>
+  <div class="form-actions" style="justify-content: center; margin-top: 20px;">
+    <a class="btn btn-primary" href="/">На главную</a>
+    <a class="btn btn-outline" href="/catalog">Каталог услуг</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Услуги — панель администратора{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Каталог услуг</h1>
+    <p class="page-sub">Услуги видны клиентам на сайте и доступны для выбора при создании заявки. Скрытые услуги остаются в истории заявок.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="/admin/services/new">+ Добавить услугу</a>
+  </div>
+</div>
+
+{% if services %}
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Услуга</th>
+        <th>Категория</th>
+        <th class="text-right">Цена от</th>
+        <th>Срок</th>
+        <th>Статус</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for service in services %}
+      <tr>
+        <td>
+          <strong>{{ service.name }}</strong>
+          {% if service.description %}<span class="cell-sub">{{ service.description|truncate(80) }}</span>{% endif %}
+        </td>
+        <td>{{ service.category }}</td>
+        <td class="text-right">{{ service.price_from|money }}</td>
+        <td class="nowrap">{{ service.duration_days }} {{ plural_ru(service.duration_days, 'день', 'дня', 'дней') }}</td>
+        <td>
+          {% if service.is_active %}
+          <span class="badge badge-ready">активна</span>
+          {% else %}
+          <span class="badge badge-muted">скрыта</span>
+          {% endif %}
+        </td>
+        <td class="text-right"><a class="btn btn-ghost btn-sm" href="/admin/services/{{ service.id }}/edit">Изменить</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <h3>Каталог пуст</h3>
+  <p>Добавьте первую услугу, чтобы клиенты могли оформить заявку.</p>
+  <a class="btn btn-primary" href="/admin/services/new">Добавить услугу</a>
+</div>
+{% endif %}
+{% endblock %}

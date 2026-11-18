@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% from "partials/ui.html" import status_badge, status_stepper %}
+{% block title %}Заявка {{ r.number }} — администрирование{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="/admin/requests">Заявки</a><span>/</span><span>{{ r.number }}</span>
+</div>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Заявка {{ r.number }}</h1>
+    <p class="page-sub">{{ r.device_type }}{% if r.brand_model %} · {{ r.brand_model }}{% endif %} · {{ r.client.full_name }} · {{ r.created_at|datetime_ru }}</p>
+  </div>
+  <div class="page-actions">{{ status_badge(r.status) }}</div>
+</div>
+
+<div class="card card-pad mb-3">
+  {{ status_stepper(r.status) }}
+</div>
+
+<div class="detail-grid">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head"><h2>Заявка</h2></div>
+      <div class="card-body">
+        <dl class="meta-list">
+          <div class="meta-row"><dt>Устройство</dt><dd>{{ r.device_type }}{% if r.brand_model %} · {{ r.brand_model }}{% endif %}</dd></div>
+          <div class="meta-row"><dt>Серийный №</dt><dd>{{ r.serial_number or '—' }}</dd></div>
+          <div class="meta-row"><dt>Услуга</dt><dd>{{ r.service.name if r.service else 'Диагностика' }}</dd></div>
+          <div class="meta-row"><dt>Клиент</dt><dd>{{ r.client.full_name }} · {{ r.client.phone or 'телефон не указан' }}</dd></div>
+          <div class="meta-row"><dt>E-mail</dt><dd style="word-break: break-all;">{{ r.client.email }}</dd></div>
+        </dl>
+        <hr class="divider">
+        <p style="white-space: pre-line;">{{ r.description }}</p>
+        {% if r.photo_path %}
+        <div class="photo-frame mt-2">
+          <img src="/static/{{ r.photo_path }}" alt="Фото устройства по заявке {{ r.number }}">
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Смена статуса</h2></div>
+      <div class="card-body">
+        <form method="post" action="/admin/requests/{{ r.id }}/status" class="form-grid">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="form-grid-2">
+            <div class="field">
+              <label for="status">Новый статус</label>
+              <select id="status" name="status" required>
+                {% for status in all_statuses if status != r.status %}
+                <option value="{{ status }}">{{ STATUS_LABELS[status] }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field">
+              <label for="status-comment">Комментарий</label>
+              <input id="status-comment" name="comment" type="text" maxlength="500" placeholder="Необязательно">
+            </div>
+          </div>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Применить статус</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Запчасти и работы</h2></div>
+      <div class="card-body">
+        {% if r.parts %}
+        <table class="parts-table">
+          <thead>
+            <tr>
+              <th class="muted small" style="text-align:left;">Наименование</th>
+              <th class="muted small" style="text-align:right;">Кол-во</th>
+              <th class="muted small" style="text-align:right;">Сумма</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in r.parts %}
+            <tr>
+              <td>{{ item.part.name }}<span class="cell-sub">{{ item.part.sku }}</span></td>
+              <td class="num">{{ item.quantity }} {{ item.part.unit }}</td>
+              <td class="num">{{ item.total|money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="muted small">Запчасти по заявке не списывались.</p>
+        {% endif %}
+        <hr class="divider">
+        <div class="total-line"><span>Работы</span><span>{{ r.labor_cost|money }}</span></div>
+        <div class="total-line"><span>Запчасти</span><span>{{ r.parts_total|money }}</span></div>
+        <div class="total-line grand"><span>Итого</span><span>{{ r.total_cost|money }}</span></div>
+        <p class="hint mt-2">Стоимость работ и запчасти изменяет назначенный мастер.</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>Комментарии</h2></div>
+      <div class="card-body">
+        {% if r.comments %}
+        <div class="stack-sm mb-3">
+          {% for comment in r.comments %}
+          <div>
+            <div class="row-between">
+              <strong class="small">
+                {{ comment.author.full_name if comment.author else 'Система' }}
+                {% if comment.is_internal %}<span class="tag">внутренний</span>{% endif %}
+              </strong>
+              <span class="muted small">{{ comment.created_at|datetime_ru }}</span>
+            </div>
+            <p class="mt-2" style="white-space: pre-line;">{{ comment.body }}</p>
+          </div>
+          {% endfor %}
+        </div>
+        <hr class="divider">
+        {% endif %}
+        <form method="post" action="/admin/requests/{{ r.id }}/comment" class="form-grid">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="field">
+            <label for="body">Новый комментарий</label>
+            <textarea id="body" name="body" rows="3" maxlength="4000" required></textarea>
+          </div>
+          <label class="checkbox">
+            <input type="checkbox" name="is_internal" value="1">
+            <span>Внутренний комментарий (клиент его не увидит)</span>
+          </label>
+          <div class="form-actions">
+            <button class="btn btn-primary" type="submit">Добавить</button>
+          </div>
+        </form>
+      </div>
+    </section>
+  </div>
+
+  <aside class="detail-side">
+    <div class="card">
+      <div class="card-head"><h2>Исполнитель</h2></div>
+      <div class="card-body">
+        <p class="small muted">Текущий мастер: <strong>{{ r.master.full_name if r.master else 'не назначен' }}</strong></p>
+        <form method="post" action="/admin/requests/{{ r.id }}/assign" class="form-grid">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="field">
+            <label for="master_id">Назначить мастера</label>
+            <select id="master_id" name="master_id">
+              <option value="">— снять назначение —</option>
+              {% for master in masters %}
+              <option value="{{ master.id }}" {{ 'selected' if r.master and r.master.id == master.id }}>{{ master.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <button class="btn btn-outline btn-block" type="submit">Сохранить</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>Служебное</h2></div>
+      <div class="card-body">
+        <dl class="meta-list">
+          <div class="meta-row"><dt>Создана</dt><dd>{{ r.created_at|datetime_ru }}</dd></div>
+          <div class="meta-row"><dt>Обновлена</dt><dd>{{ r.updated_at|datetime_ru }}</dd></div>
+          {% if r.completed_at %}<div class="meta-row"><dt>Закрыта</dt><dd>{{ r.completed_at|datetime_ru }}</dd></div>{% endif %}
+        </dl>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-head"><h2>История</h2></div>
+      <div class="card-body">
+        <ol class="timeline">
+          {% for log in r.status_logs %}
+          <li class="timeline-item {{ 'is-last' if loop.last }}">
+            <span class="timeline-dot"></span>
+            <div class="timeline-title">{{ STATUS_LABELS.get(log.status, log.status) }}</div>
+            <div class="timeline-meta">{{ log.created_at|datetime_ru }}{% if log.user %} · {{ log.user.full_name }}{% endif %}</div>
+            {% if log.comment %}<div class="timeline-body">{{ log.comment }}</div>{% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Ремонтная мастерская — приём заявок на ремонт техники{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-grid">
+    <div>
+      <span class="hero-badge">Сервисный центр · онлайн-заявки</span>
+      <h1>Ремонт техники без звонков и очередей</h1>
+      <p>Оставьте заявку за пару минут: опишите неисправность, приложите фото и следите за статусом ремонта в личном кабинете. Мастерская ведёт учёт запчастей и стоимость работ.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="/client/requests/new">Оставить заявку</a>
+        <a class="btn btn-outline-light" href="/catalog">Услуги и цены</a>
+      </div>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat"><strong>{{ stats.services }}</strong><span>услуг в каталоге</span></div>
+      <div class="hero-stat"><strong>{{ stats.masters }}</strong><span>мастеров в смене</span></div>
+      <div class="hero-stat"><strong>{{ stats.in_work }}</strong><span>заявок в работе</span></div>
+      <div class="hero-stat"><strong>{{ stats.completed }}</strong><span>ремонтов завершено</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="section-head">
+  <h2>Популярные услуги</h2>
+  <a href="/catalog">Весь каталог →</a>
+</section>
+
+{% if services %}
+<div class="service-grid">
+  {% for service in services %}
+  <article class="service-card">
+    <span class="cat">{{ service.category }}</span>
+    <h3>{{ service.name }}</h3>
+    <p>{{ service.description or 'Опишите неисправность — мастер подберёт решение.' }}</p>
+    <div class="service-price">
+      <strong>от {{ service.price_from|money }}</strong>
+      <span>{{ plural_ru(service.duration_days, 'день', 'дня', 'дней') }}</span>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty">
+  <h3>Каталог пока пуст</h3>
+  <p>Администратор ещё не добавил услуги. Загляните позже.</p>
+</div>
+{% endif %}
+
+<section class="section-head">
+  <h2>Как проходит ремонт</h2>
+</section>
+<div class="grid-3">
+  <div class="card card-pad">
+    <span class="tag">Шаг 1</span>
+    <h3 class="mt-2">Заявка и фото</h3>
+    <p class="muted">Выберите услугу, укажите тип устройства и опишите неисправность. Приложите фотографию — мастер подготовится заранее.</p>
+  </div>
+  <div class="card card-pad">
+    <span class="tag">Шаг 2</span>
+    <h3 class="mt-2">Диагностика и ремонт</h3>
+    <p class="muted">Мастер назначает заявку, согласует стоимость работ и запчастей. Каждое изменение статуса сохраняется в истории.</p>
+  </div>
+  <div class="card card-pad">
+    <span class="tag">Шаг 3</span>
+    <h3 class="mt-2">Выдача устройства</h3>
+    <p class="muted">Когда ремонт завершён, заявка переходит в статус «Готова к выдаче». Стоимость работ и деталей видна в кабинете.</p>
+  </div>
+</div>
+
+<section class="card mt-3" style="margin-top: 26px;">
+  <div class="card-body row-between">
+    <div>
+      <h2 style="font-size: 19px; margin-bottom: 4px;">Готовы сдать технику в ремонт?</h2>
+      <p class="muted">Зарегистрируйтесь и создайте заявку — это займёт не больше двух минут.</p>
+    </div>
+    <a class="btn btn-primary" href="/register">Создать аккаунт</a>
+  </div>
+</section>
+{% endblock %}

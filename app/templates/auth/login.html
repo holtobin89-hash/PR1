@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}Вход — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="auth-wrap">
+  <aside class="auth-aside">
+    <h2>Личный кабинет мастерской</h2>
+    <p>Единое окно для клиентов, мастеров и администраторов сервисного центра.</p>
+    <ul class="auth-points">
+      <li><span>✓</span> История заявок и текущий статус ремонта</li>
+      <li><span>✓</span> Рабочее место мастера и склад запчастей</li>
+      <li><span>✓</span> Статистика по заявкам и выручке</li>
+    </ul>
+  </aside>
+
+  <div class="auth-card">
+    <h1>Вход в систему</h1>
+    <p class="sub">Введите e-mail и пароль, указанные при регистрации.</p>
+
+    {% if error %}<div class="alert alert-error mb-3">{{ error }}</div>{% endif %}
+
+    <form method="post" action="/login" class="form-grid" novalidate>
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="next" value="{{ next }}">
+      <div class="field">
+        <label for="email">E-mail</label>
+        <input id="email" type="email" name="email" value="{{ email or '' }}" placeholder="you@example.ru" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Пароль</label>
+        <input id="password" type="password" name="password" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary btn-block" type="submit">Войти</button>
+    </form>
+
+    <p class="auth-foot">Нет аккаунта? <a href="/register">Зарегистрироваться как клиент</a></p>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,11 @@
+{% if flash %}
+<div class="flash flash-{{ flash.category }}" role="status" data-flash>
+  <div class="container flash-inner">
+    <span class="flash-icon" aria-hidden="true">
+      {% if flash.category == 'error' %}!{% elif flash.category == 'info' %}i{% else %}✓{% endif %}
+    </span>
+    <p>{{ flash.text }}</p>
+    <button class="flash-close" type="button" data-flash-close aria-label="Закрыть уведомление">×</button>
+  </div>
+</div>
+{% endif %}

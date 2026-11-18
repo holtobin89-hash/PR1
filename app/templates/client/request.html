@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% from "partials/ui.html" import status_badge, status_stepper %}
+{% block title %}Заявка {{ r.number }} — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="/client">Мои заявки</a><span>/</span><span>{{ r.number }}</span>
+</div>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Заявка {{ r.number }}</h1>
+    <p class="page-sub">Создана {{ r.created_at|datetime_ru }} · {{ r.device_type }}{% if r.brand_model %} · {{ r.brand_model }}{% endif %}</p>
+  </div>
+  <div class="page-actions">{{ status_badge(r.status) }}</div>
+</div>
+
+<div class="card card-pad mb-3">
+  {{ status_stepper(r.status) }}
+</div>
+
+<div class="detail-grid">
+  <div class="stack">
+    <section class="card">
+      <div class="card-head">
+        <h2>Описание неисправности</h2>
+        <span class="muted small">Обновлено {{ r.updated_at|datetime_ru }}</span>
+      </div>
+      <div class="card-body">
+        <p style="white-space: pre-line;">{{ r.description }}</p>
+        {% if r.photo_path %}
+        <div class="photo-frame mt-2">
+          <img src="/static/{{ r.photo_path }}" alt="Фото устройства по заявке {{ r.number }}">
+        </div>
+        {% endif %}
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-head"><h2>История статусов</h2></div>
+      <div class="card-body">
+        <ol class="timeline">
+          {% for log in r.status_logs %}
+          <li class="timeline-item {{ 'is-last' if loop.last }}">
+            <span class="timeline-dot"></span>
+            <div class="timeline-title">
+              {{ STATUS_LABELS.get(log.status, log.status) }}
+              {% if loop.last %}<span class="tag">текущий</span>{% endif %}
+            </div>
+            <div class="timeline-meta">{{ log.created_at|datetime_ru }}{% if log.user %} · {{ log.user.full_name }}{% endif %}</div>
+            {% if log.comment %}<div class="timeline-body">{{ log.comment }}</div>{% endif %}
+          </li>
+          {% endfor %}
+        </ol>
+      </div>
+    </section>
+
+    {% if r.public_comments %}
+    <section class="card">
+      <div class="card-head"><h2>Комментарии мастерской</h2></div>
+      <div class="card-body stack">
+        {% for comment in r.public_comments %}
+        <div>
+          <div class="row-between">
+            <strong class="small">{{ comment.author.full_name if comment.author else 'Мастерская' }}</strong>
+            <span class="muted small">{{ comment.created_at|datetime_ru }}</span>
+          </div>
+          <p class="mt-2" style="white-space: pre-line;">{{ comment.body }}</p>
+        </div>
+        {% endfor %}
+      </div>
+    </section>
+    {% endif %}
+  </div>
+
+  <aside class="detail-side">
+    <div class="card">
+      <div class="card-head"><h2>Сводка</h2></div>
+      <div class="card-body">
+        <dl class="meta-list">
+          <div class="meta-row"><dt>Услуга</dt><dd>{{ r.service.name if r.service else 'Диагностика' }}</dd></div>
+          <div class="meta-row"><dt>Мастер</dt><dd>{{ r.master.full_name if r.master else 'Ещё не назначен' }}</dd></div>
+          <div class="meta-row"><dt>Серийный номер</dt><dd>{{ r.serial_number or '—' }}</dd></div>
+          <div class="meta-row"><dt>Создана</dt><dd>{{ r.created_at|datetime_ru }}</dd></div>
+          {% if r.completed_at %}<div class="meta-row"><dt>Завершена</dt><dd>{{ r.completed_at|datetime_ru }}</dd></div>{% endif %}
+        </dl>
+
+        {% if r.parts %}
+        <hr class="divider">
+        <p class="field-label">Запчасти</p>
+        <table class="parts-table">
+          {% for item in r.parts %}
+          <tr>
+            <td>{{ item.part.name }}<span class="cell-sub">× {{ item.quantity }} {{ item.part.unit }}</span></td>
+            <td class="num">{{ item.total|money }}</td>
+          </tr>
+          {% endfor %}
+        </table>
+        {% endif %}
+
+        <hr class="divider">
+        <div class="total-line"><span>Работы</span><span>{{ r.labor_cost|money }}</span></div>
+        <div class="total-line"><span>Запчасти</span><span>{{ r.parts_total|money }}</span></div>
+        <div class="total-line grand"><span>Итого</span><span>{{ r.total_cost|money }}</span></div>
+        <p class="hint mt-2">Итоговая сумма подтверждается после диагностики.</p>
+      </div>
+    </div>
+
+    {% if r.status == 'accepted' %}
+    <div class="card">
+      <div class="card-head"><h2>Отмена заявки</h2></div>
+      <div class="card-body">
+        <p class="small muted">Отменить можно только заявку, которую мастер ещё не принял в работу.</p>
+        <form method="post" action="/client/requests/{{ r.id }}/cancel" class="form-grid" data-confirm="Отменить заявку?">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+          <div class="field">
+            <label for="comment">Причина (необязательно)</label>
+            <textarea id="comment" name="comment" rows="3" maxlength="500" placeholder="Например: решил обратиться в другой сервис"></textarea>
+          </div>
+          <button class="btn btn-danger-ghost btn-block" type="submit">Отменить заявку</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+</div>
+{% endblock %}

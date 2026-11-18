@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Редактирование услуги' if service else 'Новая услуга' }} — панель администратора{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="/admin/services">Услуги</a><span>/</span><span>{{ service.name if service else 'Новая услуга' }}</span>
+</div>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">{{ 'Редактирование услуги' if service else 'Новая услуга' }}</h1>
+    <p class="page-sub">Цена указывается как «от», итоговая стоимость согласуется после диагностики.</p>
+  </div>
+</div>
+
+{% if errors %}
+<div class="alert alert-error mb-3">
+  <strong>Проверьте форму:</strong>
+  <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+{% set values = form if form else {} %}
+<form class="card" method="post" action="{{ '/admin/services/' ~ service.id ~ '/edit' if service else '/admin/services/new' }}" novalidate>
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+  <div class="card-body form-grid">
+    <div class="form-grid-2">
+      <div class="field">
+        <label for="name">Название услуги <span class="required">*</span></label>
+        <input id="name" name="name" type="text" maxlength="150" required value="{{ values.get('name', service.name if service else '') }}">
+      </div>
+      <div class="field">
+        <label for="category">Категория</label>
+        <input id="category" name="category" type="text" maxlength="80" list="service-categories" value="{{ values.get('category', service.category if service else '') }}" placeholder="Ремонт смартфонов">
+        <datalist id="service-categories">
+          <option value="Диагностика">
+          <option value="Ремонт смартфонов">
+          <option value="Ремонт ноутбуков">
+          <option value="Ремонт бытовой техники">
+          <option value="Ремонт телевизоров">
+        </datalist>
+      </div>
+    </div>
+    <div class="field">
+      <label for="description">Описание</label>
+      <textarea id="description" name="description" rows="4" maxlength="2000">{{ values.get('description', service.description if service else '') or '' }}</textarea>
+    </div>
+    <div class="form-grid-2">
+      <div class="field">
+        <label for="price_from">Цена от, ₽ <span class="required">*</span></label>
+        <input id="price_from" name="price_from" type="text" inputmode="decimal" required value="{{ values.get('price_from', service.price_from if service else '0') }}">
+      </div>
+      <div class="field">
+        <label for="duration_days">Срок выполнения, дней</label>
+        <input id="duration_days" name="duration_days" type="number" min="1" step="1" value="{{ values.get('duration_days', service.duration_days if service else 1) }}">
+      </div>
+    </div>
+    {% if service %}
+    <label class="checkbox">
+      <input type="checkbox" name="is_active" value="1" {{ 'checked' if values.get('is_active', service.is_active) }}>
+      <span>Услуга активна и видна клиентам</span>
+    </label>
+    {% endif %}
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ 'Сохранить изменения' if service else 'Добавить услугу' }}</button>
+      <a class="btn btn-ghost" href="/admin/services">Отмена</a>
+    </div>
+  </div>
+</form>
+{% endblock %}

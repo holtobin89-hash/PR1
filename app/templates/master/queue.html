@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "partials/ui.html" import request_table, empty_state %}
+{% block title %}Мои заявки — рабочее место мастера{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Рабочее место мастера</h1>
+    <p class="page-sub">Здравствуйте, {{ current_user.full_name }}. Ниже — заявки, назначенные лично вам.</p>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">В работе</div>
+    <div class="stat-value">{{ counters.active }}</div>
+  </div>
+  <div class="stat-card stat-amber">
+    <div class="stat-label">Новые</div>
+    <div class="stat-value">{{ counters.new }}</div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-label">В ремонте</div>
+    <div class="stat-value">{{ counters.in_repair }}</div>
+  </div>
+  <div class="stat-card stat-green">
+    <div class="stat-label">Готовы к выдаче</div>
+    <div class="stat-value">{{ counters.ready }}</div>
+  </div>
+</div>
+
+<section class="section-head">
+  <h2>Назначенные заявки</h2>
+  <span class="muted small">{{ requests|length }} {{ plural_ru(requests|length, 'заявка', 'заявки', 'заявок') }}</span>
+</section>
+
+{% if requests %}
+{{ request_table(requests, '/master/requests', show_client=true) }}
+{% else %}
+{{ empty_state('Свободных заявок нет', 'Как только администратор назначит вам заявку, она появится здесь.') }}
+{% endif %}
+
+{% if history %}
+<section class="section-head">
+  <h2>Недавно закрытые</h2>
+</section>
+{{ request_table(history, '/master/requests', show_client=true) }}
+{% endif %}
+{% endblock %}

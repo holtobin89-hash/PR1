@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% from "partials/ui.html" import status_badge, request_table, empty_state %}
+{% block title %}Мои заявки — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Здравствуйте, {{ current_user.full_name.split(' ')[0] }}!</h1>
+    <p class="page-sub">Здесь собраны ваши обращения в мастерскую: текущие статусы, история и стоимость ремонта.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="/client/requests/new">+ Новая заявка</a>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card">
+    <div class="stat-label">Всего заявок</div>
+    <div class="stat-value">{{ counters.total }}</div>
+  </div>
+  <div class="stat-card stat-amber">
+    <div class="stat-label">В работе</div>
+    <div class="stat-value">{{ counters.active }}</div>
+  </div>
+  <div class="stat-card stat-green">
+    <div class="stat-label">Готовы к выдаче</div>
+    <div class="stat-value">{{ counters.ready }}</div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-label">Завершено</div>
+    <div class="stat-value">{{ counters.done }}</div>
+  </div>
+</div>
+
+{% set active_requests = requests | rejectattr('status', 'in', ['issued', 'cancelled']) | list %}
+{% set finished_requests = requests | selectattr('status', 'in', ['issued', 'cancelled']) | list %}
+
+<section class="section-head">
+  <h2>Активные заявки</h2>
+  <span class="muted small">{{ active_requests|length }} {{ plural_ru(active_requests|length, 'заявка', 'заявки', 'заявок') }}</span>
+</section>
+
+{% if active_requests %}
+<div class="grid-auto">
+  {% for item in active_requests %}
+  <article class="card card-pad">
+    <div class="row-between">
+      <a class="link-strong" href="/client/requests/{{ item.id }}">{{ short_number(item.number) }}</a>
+      {{ status_badge(item.status) }}
+    </div>
+    <h3 class="mt-2" style="font-size: 16px;">{{ item.device_type }}{% if item.brand_model %} · {{ item.brand_model }}{% endif %}</h3>
+    <p class="muted small" style="margin-top: 4px;">{{ item.description|truncate(90) }}</p>
+    <div class="meta-row" style="grid-template-columns: 1fr auto; border-bottom: 0; padding-bottom: 0;">
+      <span class="muted small">{{ item.created_at|date_ru }}</span>
+      <strong>{{ item.total_cost|money }}</strong>
+    </div>
+  </article>
+  {% endfor %}
+</div>
+{% else %}
+{{ empty_state('Активных заявок нет', 'Создайте обращение — мастер свяжется с вами и уточнит детали ремонта.', '/client/requests/new', 'Создать заявку') }}
+{% endif %}
+
+{% if finished_requests %}
+<section class="section-head">
+  <h2>История обращений</h2>
+</section>
+{{ request_table(finished_requests, '/client/requests', show_client=false) }}
+{% endif %}
+{% endblock %}

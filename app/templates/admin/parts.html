@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}Склад запчастей — панель администратора{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Склад запчастей</h1>
+    <p class="page-sub">Остатки обновляются автоматически, когда мастер списывает деталь на заявку.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="/admin/parts/new">+ Добавить запчасть</a>
+  </div>
+</div>
+
+{% if low_stock %}
+<div class="alert alert-error mb-3">
+  <strong>Пора пополнить склад:</strong>
+  {% for part in low_stock %}{{ part.name }} (остаток {{ part.quantity }} {{ part.unit }}, минимум {{ part.min_quantity }}){% if not loop.last %}; {% endif %}{% endfor %}.
+</div>
+{% endif %}
+
+<form class="filter-bar" method="get" action="/admin/parts">
+  <div class="field field-search">
+    <label for="q">Поиск по названию или артикулу</label>
+    <input id="q" type="search" name="q" value="{{ query }}" placeholder="Например: BAT-IP11">
+  </div>
+  <button class="btn btn-outline" type="submit">Найти</button>
+  {% if query %}<a class="btn btn-ghost" href="/admin/parts">Сбросить</a>{% endif %}
+</form>
+
+{% if parts %}
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Артикул</th>
+        <th>Наименование</th>
+        <th class="text-right">Остаток</th>
+        <th class="text-right">Минимум</th>
+        <th class="text-right">Цена</th>
+        <th>Приход / списание</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for part in parts %}
+      <tr>
+        <td class="nowrap"><code>{{ part.sku }}</code></td>
+        <td>
+          {{ part.name }}
+          {% if not part.is_active %}<span class="cell-sub">скрыта из выдачи</span>
+          {% elif part.is_low_stock %}<span class="cell-sub" style="color: var(--red);">ниже минимального остатка</span>{% endif %}
+        </td>
+        <td class="text-right nowrap"><strong>{{ part.quantity }}</strong> {{ part.unit }}</td>
+        <td class="text-right nowrap">{{ part.min_quantity }}</td>
+        <td class="text-right nowrap">{{ part.price|money }}</td>
+        <td>
+          <form class="row-between" method="post" action="/admin/parts/{{ part.id }}/stock" style="gap: 8px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="number" name="amount" step="1" style="max-width: 90px; padding: 7px 9px;" placeholder="±10" required>
+            <button class="btn btn-outline btn-sm" type="submit">ОК</button>
+          </form>
+        </td>
+        <td class="text-right"><a class="btn btn-ghost btn-sm" href="/admin/parts/{{ part.id }}/edit">Изменить</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="hint mt-2">Положительное число — приход, отрицательное — списание. Остаток не может стать отрицательным.</p>
+{% else %}
+<div class="empty">
+  <h3>Запчастей не найдено</h3>
+  <p>{{ 'Попробуйте изменить поисковый запрос.' if query else 'Добавьте первую позицию на склад.' }}</p>
+  <a class="btn btn-primary" href="/admin/parts/new">Добавить запчасть</a>
+</div>
+{% endif %}
+{% endblock %}

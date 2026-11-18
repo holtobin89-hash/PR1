@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}Пользователи — панель администратора{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Сотрудники и клиенты</h1>
+    <p class="page-sub">Роли определяют доступ: клиент видит свои заявки, мастер — назначенные, администратор — всё.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="/admin/users/new">+ Добавить пользователя</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" action="/admin/users">
+  <div class="field field-search">
+    <label for="q">Поиск</label>
+    <input id="q" type="search" name="q" value="{{ filters.q }}" placeholder="ФИО, e-mail или телефон">
+  </div>
+  <div class="field">
+    <label for="role">Роль</label>
+    <select id="role" name="role">
+      <option value="">Все роли</option>
+      {% for key, label in ROLE_LABELS.items() %}
+      <option value="{{ key }}" {{ 'selected' if filters.role == key }}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-outline" type="submit">Применить</button>
+  {% if filters.q or filters.role %}<a class="btn btn-ghost" href="/admin/users">Сбросить</a>{% endif %}
+</form>
+
+{% if users %}
+<div class="table-wrap">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Пользователь</th>
+        <th>E-mail</th>
+        <th>Телефон</th>
+        <th>Роль</th>
+        <th>Статус</th>
+        <th>Создан</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in users %}
+      <tr>
+        <td><strong>{{ item.full_name }}</strong>{% if item.id == current_user.id %}<span class="cell-sub">это вы</span>{% endif %}</td>
+        <td style="word-break: break-all;">{{ item.email }}</td>
+        <td class="nowrap">{{ item.phone or '—' }}</td>
+        <td><span class="badge badge-role">{{ ROLE_LABELS.get(item.role, item.role) }}</span></td>
+        <td>
+          {% if item.is_active %}
+          <span class="badge badge-ready">активен</span>
+          {% else %}
+          <span class="badge badge-cancelled">заблокирован</span>
+          {% endif %}
+        </td>
+        <td class="nowrap">{{ item.created_at|date_ru }}</td>
+        <td class="text-right"><a class="btn btn-ghost btn-sm" href="/admin/users/{{ item.id }}/edit">Изменить</a></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="empty">
+  <h3>Пользователи не найдены</h3>
+  <p>Измените условия поиска или добавьте сотрудника.</p>
+  <a class="btn btn-primary" href="/admin/users/new">Добавить пользователя</a>
+</div>
+{% endif %}
+{% endblock %}

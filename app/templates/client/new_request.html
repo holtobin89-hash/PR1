@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block title %}Новая заявка — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="breadcrumbs">
+  <a href="/client">Мои заявки</a><span>/</span><span>Новая заявка</span>
+</div>
+
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Новая заявка на ремонт</h1>
+    <p class="page-sub">Опишите неисправность как можно точнее. Фотография устройства поможет мастеру подготовиться.</p>
+  </div>
+</div>
+
+{% if errors %}
+<div class="alert alert-error mb-3">
+  <strong>Заявка не создана:</strong>
+  <ul>{% for error in errors %}<li>{{ error }}</li>{% endfor %}</ul>
+</div>
+{% endif %}
+
+<div class="detail-grid">
+  <form class="card" method="post" action="/client/requests/new" enctype="multipart/form-data" novalidate>
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <div class="card-head"><h2>Данные устройства</h2></div>
+    <div class="card-body form-grid">
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="device_type">Тип устройства <span class="required">*</span></label>
+          <select id="device_type" name="device_type" required>
+            <option value="">Выберите тип</option>
+            {% for item in device_types %}
+            <option value="{{ item }}" {{ 'selected' if form.device_type == item }}>{{ item }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="brand_model">Модель / бренд</label>
+          <input id="brand_model" type="text" name="brand_model" value="{{ form.brand_model or '' }}" placeholder="Например, Apple iPhone 11" maxlength="150">
+        </div>
+      </div>
+      <div class="form-grid-2">
+        <div class="field">
+          <label for="serial_number">Серийный номер</label>
+          <input id="serial_number" type="text" name="serial_number" value="{{ form.serial_number or '' }}" placeholder="Если указан на корпусе" maxlength="80">
+        </div>
+        <div class="field">
+          <label for="service_id">Услуга из каталога</label>
+          <select id="service_id" name="service_id">
+            <option value="">Не выбрана — нужна диагностика</option>
+            {% for service in services %}
+            <option value="{{ service.id }}" {{ 'selected' if selected_service == service.id }}>
+              {{ service.category }} · {{ service.name }} (от {{ service.price_from|money }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label for="description">Описание неисправности <span class="required">*</span></label>
+        <textarea id="description" name="description" rows="6" maxlength="4000" required placeholder="Что случилось с устройством, когда появилась проблема, что уже пытались сделать">{{ form.description or '' }}</textarea>
+        <span class="hint">Минимум 10 символов. Не указывайте пароли и другие секретные данные.</span>
+      </div>
+      <div class="field">
+        <label for="photo">Фотография устройства</label>
+        <div class="file-drop">
+          <div id="photo-label">Файл не выбран</div>
+          <input id="photo" type="file" name="photo" accept="image/png,image/jpeg,image/webp,image/gif" data-file-input="#photo-label">
+          <div class="hint">JPG, PNG, WEBP или GIF, до 5 МБ.</div>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit">Отправить заявку</button>
+        <a class="btn btn-ghost" href="/client">Отмена</a>
+      </div>
+    </div>
+  </form>
+
+  <aside class="detail-side">
+    <div class="card">
+      <div class="card-head"><h2>Что дальше</h2></div>
+      <div class="card-body stack-sm">
+        <p class="small"><strong>1.</strong> Заявка получает статус «Принята» и номер вида RM-2026-0001.</p>
+        <p class="small"><strong>2.</strong> Администратор назначает мастера, тот проводит диагностику.</p>
+        <p class="small"><strong>3.</strong> Стоимость работ и запчастей согласуется, статус меняется на «В ремонте».</p>
+        <p class="small"><strong>4.</strong> Когда устройство готово, вы увидите статус «Готова к выдаче».</p>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>Нужна помощь?</h2></div>
+      <div class="card-body small muted">
+        <p>Позвоните в мастерскую: <strong>+7 900 100-10-10</strong></p>
+        <p>Ежедневно с 9:00 до 20:00.</p>
+      </div>
+    </div>
+  </aside>
+</div>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% block title %}Статистика — панель администратора{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Статистика и аналитика</h1>
+    <p class="page-sub">Динамика заявок, выручка, популярные устройства и загрузка мастеров.</p>
+  </div>
+</div>
+
+<div class="stat-grid">
+  <div class="stat-card stat-green">
+    <div class="stat-label">Выручка за всё время</div>
+    <div class="stat-value">{{ indicators.total_revenue|money }}</div>
+    <div class="stat-note">по выданным заявкам</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Выручка за месяц</div>
+    <div class="stat-value">{{ indicators.month_revenue|money }}</div>
+    <div class="stat-note">текущий календарный месяц</div>
+  </div>
+  <div class="stat-card stat-purple">
+    <div class="stat-label">Средний чек</div>
+    <div class="stat-value">{{ indicators.avg_check|money }}</div>
+  </div>
+  <div class="stat-card stat-amber">
+    <div class="stat-label">Всего заявок</div>
+    <div class="stat-value">{{ indicators.total_requests }}</div>
+  </div>
+</div>
+
+<div class="chart-grid">
+  <section class="chart-card">
+    <h3>Заявки за последние 14 дней</h3>
+    <div class="chart-box"><canvas id="chart-requests" aria-label="График заявок по дням" role="img"></canvas></div>
+  </section>
+  <section class="chart-card">
+    <h3>Выручка по месяцам</h3>
+    <div class="chart-box"><canvas id="chart-revenue" aria-label="График выручки" role="img"></canvas></div>
+  </section>
+  <section class="chart-card">
+    <h3>Популярные типы устройств</h3>
+    <div class="chart-box"><canvas id="chart-devices" aria-label="Диаграмма типов устройств" role="img"></canvas></div>
+  </section>
+  <section class="chart-card">
+    <h3>Загрузка мастеров (активные заявки)</h3>
+    <div class="chart-box"><canvas id="chart-load" aria-label="Диаграмма загрузки мастеров" role="img"></canvas></div>
+  </section>
+</div>
+
+<section class="card mt-3" style="margin-top: 26px;">
+  <div class="card-head"><h2>Заявки по статусам</h2></div>
+  <div class="card-body">
+    {% for status in ALL_STATUSES %}
+    {% set count = by_status[status] %}
+    {% set percent = (count / indicators.total_requests * 100) if indicators.total_requests else 0 %}
+    <div class="row-between" style="margin-bottom: 6px;">
+      <span class="small">{{ STATUS_LABELS[status] }}</span>
+      <span class="small muted">{{ count }} · {{ '%.0f'|format(percent) }}%</span>
+    </div>
+    <div style="height: 8px; background: var(--surface-soft); border-radius: 99px; overflow: hidden; margin-bottom: 14px;">
+      <div style="height: 100%; width: {{ '%.1f'|format(percent) }}%; background: var(--brand); border-radius: 99px;"></div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/vendor/chart.umd.min.js"></script>
+<script>
+  (function () {
+    if (typeof Chart === "undefined") {
+      document.querySelectorAll(".chart-box").forEach(function (box) {
+        box.innerHTML = '<p class="muted small">Не удалось загрузить библиотеку графиков. Числовые данные доступны в отчёте ниже.</p>';
+      });
+      return;
+    }
+
+    Chart.defaults.font.family = '"Segoe UI", Roboto, system-ui, sans-serif';
+    Chart.defaults.color = "#6b7894";
+    Chart.defaults.borderColor = "#e2e8f4";
+
+    var requestsData = {{ requests_chart|tojson }};
+    var revenueData = {{ revenue_chart|tojson }};
+    var deviceData = {{ device_chart|tojson }};
+    var loadData = {{ load_chart|tojson }};
+
+    new Chart(document.getElementById("chart-requests"), {
+      type: "line",
+      data: {
+        labels: requestsData.labels,
+        datasets: [{
+          label: "Заявки",
+          data: requestsData.values,
+          borderColor: "#2f5bea",
+          backgroundColor: "rgba(47, 91, 234, .12)",
+          fill: true,
+          tension: .35,
+          pointRadius: 3,
+          pointBackgroundColor: "#2f5bea"
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#eef1f8" } },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("chart-revenue"), {
+      type: "bar",
+      data: {
+        labels: revenueData.labels,
+        datasets: [{
+          label: "Выручка, ₽",
+          data: revenueData.values,
+          backgroundColor: "rgba(15, 157, 110, .75)",
+          borderRadius: 8,
+          maxBarThickness: 42
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                return new Intl.NumberFormat("ru-RU").format(ctx.parsed.y) + " ₽";
+              }
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function (value) {
+                return new Intl.NumberFormat("ru-RU", { notation: "compact" }).format(value);
+              }
+            },
+            grid: { color: "#eef1f8" }
+          },
+          x: { grid: { display: false } }
+        }
+      }
+    });
+
+    new Chart(document.getElementById("chart-devices"), {
+      type: "doughnut",
+      data: {
+        labels: deviceData.labels,
+        datasets: [{
+          data: deviceData.values,
+          backgroundColor: ["#2f5bea", "#12b886", "#f0a020", "#7c5cff", "#0f7186", "#c3352b"],
+          borderWidth: 0,
+          hoverOffset: 6
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: "58%",
+        plugins: { legend: { position: "bottom", labels: { boxWidth: 10, padding: 14 } } }
+      }
+    });
+
+    new Chart(document.getElementById("chart-load"), {
+      type: "bar",
+      data: {
+        labels: loadData.labels,
+        datasets: [{
+          label: "Активные заявки",
+          data: loadData.values,
+          backgroundColor: "rgba(124, 92, 255, .7)",
+          borderRadius: 8,
+          maxBarThickness: 28
+        }]
+      },
+      options: {
+        indexAxis: "y",
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { beginAtZero: true, ticks: { precision: 0 }, grid: { color: "#eef1f8" } },
+          y: { grid: { display: false } }
+        }
+      }
+    });
+  })();
+</script>
+{% endblock %}

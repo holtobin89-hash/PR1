@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Каталог услуг — Ремонтная мастерская{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <div>
+    <h1 class="page-title">Услуги и цены</h1>
+    <p class="page-sub">Ориентировочная стоимость работ. Точная сумма определяется после диагностики и согласуется с вами.</p>
+  </div>
+  <div class="page-actions">
+    <a class="btn btn-primary" href="/client/requests/new">Оставить заявку</a>
+  </div>
+</div>
+
+<form class="filter-bar" method="get" action="/catalog">
+  <div class="field field-search">
+    <label for="q">Поиск по услугам</label>
+    <input id="q" type="search" name="q" value="{{ query }}" placeholder="Например: замена экрана">
+  </div>
+  <div class="field">
+    <label for="category">Категория</label>
+    <select id="category" name="category">
+      <option value="">Все категории</option>
+      {% for item in categories %}
+      <option value="{{ item }}" {{ 'selected' if item == selected_category }}>{{ item }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-outline" type="submit">Найти</button>
+  {% if query or selected_category %}
+  <a class="btn btn-ghost" href="/catalog">Сбросить</a>
+  {% endif %}
+</form>
+
+<p class="muted small">Найдено услуг: <strong>{{ total }}</strong></p>
+
+{% if grouped %}
+  {% for category, items in grouped.items() %}
+  <section class="section-head">
+    <h2>{{ category }}</h2>
+    <span class="muted small">{{ items|length }} {{ plural_ru(items|length, 'услуга', 'услуги', 'услуг') }}</span>
+  </section>
+  <div class="service-grid">
+    {% for service in items %}
+    <article class="service-card">
+      <span class="cat">{{ service.category }}</span>
+      <h3>{{ service.name }}</h3>
+      <p>{{ service.description or 'Уточните детали у мастера при оформлении заявки.' }}</p>
+      <div class="service-price">
+        <strong>от {{ service.price_from|money }}</strong>
+        <span>{{ service.duration_days }} {{ plural_ru(service.duration_days, 'день', 'дня', 'дней') }}</span>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="empty">
+    <div class="empty-icon" aria-hidden="true">🔍</div>
+    <h3>Ничего не нашлось</h3>
+    <p>Попробуйте изменить запрос или выберите другую категорию.</p>
+    <a class="btn btn-outline" href="/catalog">Показать все услуги</a>
+  </div>
+{% endif %}
+{% endblock %}
