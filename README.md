@@ -2,7 +2,7 @@
 
 Учебный веб-проект по практике: приложение сервисного центра для приёма заявок на ремонт техники, отслеживания статусов и учёта запчастей.
 
-**Стек:** Python 3.11+, FastAPI, SQLAlchemy 2.0, SQLite, Jinja2, HTML/CSS/JS. Графики — Chart.js (лежит локально в `app/static/vendor`).
+**Стек:** Python 3.11+ (рекомендуется 3.11 или 3.12), FastAPI, SQLAlchemy 2.0, SQLite, Jinja2, HTML/CSS/JS. Графики — Chart.js (лежит локально в `app/static/vendor`).
 
 ## Возможности
 
@@ -31,18 +31,45 @@
 - пользователи: создание сотрудников, роли, блокировка, сброс пароля;
 - статистика: заявки по дням, выручка по месяцам, типы устройств, загрузка мастеров, разбивка по статусам.
 
-## Быстрый старт (Windows)
+## Быстрый старт (на любом ПК)
+
+1. Скачайте или распакуйте проект в любую удобную папку.
+2. Откройте терминал (PowerShell, CMD или терминал в VS Code / PyCharm) **внутри корневой папки проекта** (`Pr_1`, где лежит файл `requirements.txt`).
+3. Выполните команды для вашей операционной системы.
+
+### Windows (PowerShell)
+
+> **Важно:** Если вы скопировали проект с другого компьютера и внутри уже есть папка `.venv`, сначала удалите её командой `Remove-Item -Recurse -Force .venv` (иначе пути в окружении не совпадут с новым ПК).
 
 ```powershell
-cd D:\File\file\Project\Pr_1
+# 1. Создание виртуального окружения
 python -m venv .venv
+
+# 2. Обновление pip и установка зависимостей
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+# 3. Запуск сервера
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --reload
 ```
 
-Откройте <http://127.0.0.1:8000>.
+### Linux / macOS (Bash/Zsh)
 
-При первом запуске база `workshop.db` создаётся автоматически и наполняется демо-данными. Чтобы запустить с пустой базой, установите переменную окружения `AUTO_SEED=0`.
+```bash
+# 1. Создание виртуального окружения
+python3 -m venv .venv
+
+# 2. Установка зависимостей
+./.venv/bin/python -m pip install --upgrade pip
+./.venv/bin/python -m pip install -r requirements.txt
+
+# 3. Запуск сервера
+./.venv/bin/python -m uvicorn app.main:app --reload
+```
+
+После запуска откройте в браузере: <http://127.0.0.1:8000>.
+
+При первом запуске база `workshop.db` создаётся автоматически и наполняется демо-данными. Чтобы запустить с пустой базой, установите переменную окружения `AUTO_SEED=0` перед запуском.
 
 ### Демо-доступы
 
@@ -56,7 +83,7 @@ python -m venv .venv
 
 ## Структура проекта
 
-```
+```text
 Pr_1/
 ├─ app/
 │  ├─ main.py            # создание FastAPI, middleware, обработчики ошибок
@@ -129,10 +156,10 @@ Pr_1/
 ## Полезные команды
 
 ```powershell
-# пересоздать демо-базу
+# пересоздать демо-базу (Windows)
 Remove-Item workshop.db
 .\.venv\Scripts\python.exe -m app.seed
 
-# запуск на другом порту
+# запуск на другом порту, если 8000 занят
 .\.venv\Scripts\python.exe -m uvicorn app.main:app --port 8080
 ```
